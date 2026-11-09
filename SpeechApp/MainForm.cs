@@ -13,6 +13,12 @@ public partial class MainForm : Form
     public MainForm()
     {
         InitializeComponent();
+        try
+        {
+            if (!string.IsNullOrEmpty(Environment.ProcessPath))
+                this.Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath);
+        }
+        catch { }
         BindEvents();
     }
 

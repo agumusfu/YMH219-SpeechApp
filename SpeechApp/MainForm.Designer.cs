@@ -64,7 +64,7 @@ partial class MainForm
         lblTitle.AutoSize = true;
         pnlHeader.Controls.Add(lblTitle);
 
-        lblActiveMode.Text = "Durum: Hazir (Beklemede)";
+        lblActiveMode.Text = "Durum: Hazır (Beklemede)";
         lblActiveMode.Font = new Font("Segoe UI", 10f, FontStyle.Bold);
         lblActiveMode.ForeColor = Color.LightSkyBlue;
         lblActiveMode.BackColor = Color.FromArgb(45, 50, 68);
@@ -80,27 +80,28 @@ partial class MainForm
         pnlTtsControls.BackColor = Color.FromArgb(38, 40, 54);
         pnlTtsControls.Padding = new Padding(10);
 
-        lblVoice.Text = "Ses Secimi:";
+        lblVoice.Text = "Ses Seçimi:";
         lblVoice.ForeColor = Color.LightGray;
         lblVoice.Location = new Point(12, 22);
         lblVoice.AutoSize = true;
         pnlTtsControls.Controls.Add(lblVoice);
 
-        cmbVoice.Location = new Point(90, 18);
-        cmbVoice.Width = 230;
+        cmbVoice.Location = new Point(108, 18);
+        cmbVoice.Width = 240;
         cmbVoice.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbVoice.FlatStyle = FlatStyle.Flat;
         cmbVoice.BackColor = Color.FromArgb(55, 58, 74);
         cmbVoice.ForeColor = Color.White;
         pnlTtsControls.Controls.Add(cmbVoice);
 
-        lblRate.Text = "Hiz:";
+        lblRate.Text = "Hız:";
         lblRate.ForeColor = Color.LightGray;
-        lblRate.Location = new Point(340, 22);
+        lblRate.Location = new Point(366, 22);
         lblRate.AutoSize = true;
         pnlTtsControls.Controls.Add(lblRate);
 
-        trkRate.Location = new Point(372, 14);
-        trkRate.Width = 140;
+        trkRate.Location = new Point(402, 14);
+        trkRate.Width = 135;
         trkRate.Minimum = -10;
         trkRate.Maximum = 10;
         trkRate.Value = 0;
@@ -110,18 +111,18 @@ partial class MainForm
 
         lblRateVal.Text = "0";
         lblRateVal.ForeColor = Color.Cyan;
-        lblRateVal.Location = new Point(515, 22);
+        lblRateVal.Location = new Point(542, 22);
         lblRateVal.AutoSize = true;
         pnlTtsControls.Controls.Add(lblRateVal);
 
-        lblVolume.Text = "Ses Duzeyi:";
+        lblVolume.Text = "Ses Düzeyi:";
         lblVolume.ForeColor = Color.LightGray;
-        lblVolume.Location = new Point(555, 22);
+        lblVolume.Location = new Point(580, 22);
         lblVolume.AutoSize = true;
         pnlTtsControls.Controls.Add(lblVolume);
 
-        trkVolume.Location = new Point(635, 14);
-        trkVolume.Width = 140;
+        trkVolume.Location = new Point(672, 14);
+        trkVolume.Width = 135;
         trkVolume.Minimum = 0;
         trkVolume.Maximum = 100;
         trkVolume.Value = 100;
@@ -131,7 +132,7 @@ partial class MainForm
 
         lblVolumeVal.Text = "100%";
         lblVolumeVal.ForeColor = Color.Cyan;
-        lblVolumeVal.Location = new Point(780, 22);
+        lblVolumeVal.Location = new Point(812, 22);
         lblVolumeVal.AutoSize = true;
         pnlTtsControls.Controls.Add(lblVolumeVal);
 
@@ -212,15 +213,16 @@ partial class MainForm
         pnlSttTop.Dock = DockStyle.Top;
         pnlSttTop.Height = 112;
 
-        lblRecognizer.Text = "Tanima Dili:";
+        lblRecognizer.Text = "Tanıma Dili:";
         lblRecognizer.ForeColor = Color.LightGray;
         lblRecognizer.Location = new Point(0, 8);
         lblRecognizer.AutoSize = true;
         pnlSttTop.Controls.Add(lblRecognizer);
 
-        cmbRecognizer.Location = new Point(85, 4);
-        cmbRecognizer.Width = 280;
+        cmbRecognizer.Location = new Point(100, 4);
+        cmbRecognizer.Width = 285;
         cmbRecognizer.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbRecognizer.FlatStyle = FlatStyle.Flat;
         cmbRecognizer.BackColor = Color.FromArgb(55, 58, 74);
         cmbRecognizer.ForeColor = Color.White;
         pnlSttTop.Controls.Add(cmbRecognizer);

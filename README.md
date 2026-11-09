@@ -60,17 +60,18 @@ YMH219-SpeechApp/
 ## Temel Özellikler
 
 - **Text-to-Speech (TTS):**
-  - Metin alanındaki (`RichTextBox`) içeriği sesli okuma
+  - Metin alanındaki (`RichTextBox`) Türkçe veya İngilizce içeriği doğal sesle okuma
   - **Başlat**, **Duraklat / Devam Et**, **Durdur** ve **Temizle** kontrolleri
-  - Sistemde yüklü sesler arasından seçim (`ComboBox`)
+  - Yüksek kaliteli Türkçe/İngilizce doğal ses ile yerel `[Yerel SAPI]` sistem sesleri arasında seçim (`ComboBox`)
   - Okuma hızı (`-10` ile `+10`) ve ses düzeyi (`0%` ile `100%`) ayarı
 - **Speech-to-Text (STT):**
-  - Mikrofon üzerinden konuşmayı algılayıp anlık tahmin (`SpeechHypothesized`) ve kesinleşen metni (`SpeechRecognized`) metin alanına aktarma
-  - Mikrofon veya konuşma tanıma dil paketi bulunamadığında uygulamanın çökmesini önleyen anlaşılır hata mesajları
-- **Durum Takibi & Dışa Aktarım:**
-  - Üst rozet ve alt durum çubuğu (`StatusStrip`) üzerinden aktif işlemin (`Hazır`, `Okuyor`, `Duraklatıldı`, `Dinliyor`) anlık gösterimi
-  - Her TTS/STT işleminin zaman damgası ve güven/hız detayıyla listelenmesi
-  - Dönüştürülen metin ve kayıtların `.txt` dosyasına kaydedilmesi
+  - Vosk + NAudio tabanlı **Türkçe (`tr-TR`)** ve İngilizce (`en-US`) çevrimdışı konuşma tanıma
+  - Mikrofon üzerinden konuşmayı algılayıp anlık tahmin (`Anlık Algılama`) ve kesinleşen metni metin alanına aktarma
+  - Mikrofon veya konuşma tanıma servisine erişilemediğinde kullanıcıya anlaşılır Türkçe hata mesajları
+- **Arayüz ve Dışa Aktarım:**
+  - Özel mikrofon/ses dalgası uygulama ikonu (`app.ico`) ve koyu tema arayüz
+  - Üst rozet ve alt durum çubuğu (`StatusStrip`) üzerinden aktif işlemin anlık gösterimi
+  - Her TTS/STT işleminin zaman damgasıyla listelenmesi ve `.txt` dosyasına kaydedilmesi
 
 ---
 

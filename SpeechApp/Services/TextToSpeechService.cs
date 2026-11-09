@@ -40,7 +40,7 @@ public class TextToSpeechService : IDisposable
         };
         _sapiSynthesizer.SpeakCompleted += (s, e) =>
         {
-            if (e.Error != null)
+            if (e.Error != null && !e.Cancelled && e.Error is not OperationCanceledException)
                 ErrorOccurred?.Invoke($"Seslendirme hatası: {e.Error.Message}");
             if (!_isOnlineSpeaking)
                 StatusChanged?.Invoke("Ready");
