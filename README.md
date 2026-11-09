@@ -66,7 +66,7 @@ YMH219-SpeechApp/
   - Okuma hızı (`-10` ile `+10`) ve ses düzeyi (`0%` ile `100%`) ayarı
 - **Speech-to-Text (STT):**
   - Vosk + NAudio tabanlı **Türkçe + İngilizce (Otomatik)**, **Türkçe (`tr-TR`)** ve **İngilizce (`en-US`)** çevrimdışı konuşma tanıma
-  - **Mikrofon Aç** ve **Dinlemeyi Durdur** kontrolleri; canlı dil değişikliğinde otomatik model geçişi
+  - **Mikrofonu Dinle** ve **Dinlemeyi Durdur** kontrolleri; canlı dil değişikliğinde otomatik model geçişi
   - Mikrofon üzerinden konuşmayı algılayıp anlık tahmin (`Anlık Algılama`) ve kesinleşen metni metin alanına aktarma
   - Mikrofon veya konuşma tanıma servisine erişilemediğinde kullanıcıya anlaşılır Türkçe hata mesajları
 - **Arayüz ve Dışa Aktarım:**

@@ -139,10 +139,10 @@ partial class MainForm
         // splitMain
         splitMain.Dock = DockStyle.Fill;
         splitMain.Orientation = Orientation.Vertical;
-        splitMain.Size = new Size(1060, 520);
+        splitMain.Size = new Size(1120, 520);
         splitMain.Panel1MinSize = 440;
-        splitMain.Panel2MinSize = 440;
-        splitMain.SplitterDistance = 530;
+        splitMain.Panel2MinSize = 510;
+        splitMain.SplitterDistance = 520;
         splitMain.Padding = new Padding(8);
 
         // grpText (Left: TTS + Metin Alani)
@@ -227,9 +227,9 @@ partial class MainForm
         cmbRecognizer.ForeColor = Color.White;
         pnlSttTop.Controls.Add(cmbRecognizer);
 
-        btnStartListen.Text = "Mikrofon Aç";
+        btnStartListen.Text = "Mikrofonu Dinle";
         btnStartListen.Location = new Point(0, 38);
-        btnStartListen.Size = new Size(135, 36);
+        btnStartListen.Size = new Size(165, 38);
         btnStartListen.BackColor = Color.FromArgb(50, 110, 200);
         btnStartListen.ForeColor = Color.White;
         btnStartListen.FlatStyle = FlatStyle.Flat;
@@ -237,8 +237,8 @@ partial class MainForm
         pnlSttTop.Controls.Add(btnStartListen);
 
         btnStopListen.Text = "Dinlemeyi Durdur";
-        btnStopListen.Location = new Point(143, 38);
-        btnStopListen.Size = new Size(155, 36);
+        btnStopListen.Location = new Point(173, 38);
+        btnStopListen.Size = new Size(175, 38);
         btnStopListen.BackColor = Color.FromArgb(180, 50, 50);
         btnStopListen.ForeColor = Color.White;
         btnStopListen.FlatStyle = FlatStyle.Flat;
@@ -247,8 +247,8 @@ partial class MainForm
         pnlSttTop.Controls.Add(btnStopListen);
 
         btnExportTxt.Text = ".txt Kaydet";
-        btnExportTxt.Location = new Point(306, 38);
-        btnExportTxt.Size = new Size(115, 36);
+        btnExportTxt.Location = new Point(356, 38);
+        btnExportTxt.Size = new Size(115, 38);
         btnExportTxt.BackColor = Color.FromArgb(0, 140, 130);
         btnExportTxt.ForeColor = Color.White;
         btnExportTxt.FlatStyle = FlatStyle.Flat;
@@ -283,8 +283,8 @@ partial class MainForm
 
         // MainForm
         this.Text = "YMH 219 - SpeechApp (TTS & STT)";
-        this.Size = new Size(1080, 680);
-        this.MinimumSize = new Size(960, 560);
+        this.Size = new Size(1140, 680);
+        this.MinimumSize = new Size(1020, 560);
         this.BackColor = Color.FromArgb(28, 30, 42);
         this.Controls.Add(splitMain);
         this.Controls.Add(pnlTtsControls);
