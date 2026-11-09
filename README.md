@@ -24,9 +24,10 @@ Bu proje, ses ve metin arasında çift yönlü dönüşüm yapabilen bir Windows
 ## Kullanılan Teknolojiler ve Paketler
 
 - **Platform:** C# / .NET 8.0 (`net8.0-windows`) Windows Forms
-- **NuGet Paketi:** `System.Speech` (`8.0.0`)
-  - `System.Speech.Synthesis.SpeechSynthesizer` (Text-to-Speech)
-  - `System.Speech.Recognition.SpeechRecognitionEngine` (Speech-to-Text)
+- **NuGet Paketleri:**
+  - `System.Speech` (`8.0.0`) — Yerel Windows SAPI5 ses sentezi ve konuşma tanıma
+  - `Vosk` (`0.3.38`) — Çevrimdışı yüksek doğruluklu **Türkçe (`tr-TR`)** ve İngilizce (`en-US`) konuşma tanıma
+  - `NAudio` (`2.2.1`) — Mikrofon ses yakalama (`WaveInEvent`) ve akıcı ses oynatma (`WaveOutEvent` / `Mp3FileReader`)
 - **Dosya İşlemleri:** `System.IO.StreamWriter` (UTF-8 `.txt` dışa aktarımı)
 
 ---
@@ -90,5 +91,6 @@ dotnet run --project SpeechApp/SpeechApp.csproj
 
 ## Bilinen Sınırlamalar ve Geliştirme Notları
 
-- `System.Speech.Recognition.SpeechRecognitionEngine`, Windows'un yerel Konuşma Tanıma (SAPI) motorunu kullanır; dolayısıyla sistemde en az bir konuşma tanıma dil paketi (ör. Windows Ayarları > Zaman ve Dil > Konuşma) ve aktif bir mikrofon bulunmalıdır.
-- Dil paketi veya mikrofon mevcut olmadığında `SpeechToTextService` durumu yakalayarak kullanıcıyı bilgilendirir, Text-to-Speech özellikleri bağımsız olarak çalışmaya devam eder.
+- **Türkçe Speech-to-Text (Vosk):** İlk kez Türkçe veya İngilizce akıllı model seçilip mikrofon başlatıldığında ~35–40 MB boyutundaki Vosk modeli `%LocalAppData%\SpeechApp\models\` dizinine otomatik olarak indirilir; sonraki kullanımlarda tamamen çevrimdışı çalışır.
+- **Türkçe Text-to-Speech:** Varsayılan yüksek kaliteli doğal Türkçe/İngilizce seslendirme için internet bağlantısı gerekir; çevrimdışı durumlarda `[Yerel SAPI]` sistem sesleri kullanılabilir.
+- Mikrofon bulunmadığında veya servis erişim hatasında `SpeechToTextService` durumu yakalayarak kullanıcıya anlaşılır hata mesajı gösterir.
