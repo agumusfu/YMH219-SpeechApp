@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.IO.Compression;
 using System.Speech.Recognition;
 using System.Text.Json;
@@ -8,8 +7,8 @@ using Vosk;
 namespace SpeechApp.Services;
 
 /// <summary>
-/// Çift motorlu Sesten Metne (Speech-to-Text) servisi:
-/// 1) Vosk + NAudio (Türkçe & İngilizce çevrimdışı yüksek kaliteli konuşma tanıma)
+/// Çok dilli Sesten Metne (Speech-to-Text) servisi:
+/// 1) Vosk + NAudio (Türkçe, İngilizce veya Türkçe+İngilizce Otomatik Çift Model)
 /// 2) Windows SAPI (System.Speech.Recognition)
 /// </summary>
 public class SpeechToTextService : IDisposable
@@ -20,10 +19,13 @@ public class SpeechToTextService : IDisposable
     private const string EnModelUrl = "https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip";
 
     private readonly string _modelsRoot;
-    private Model? _voskModel;
-    private VoskRecognizer? _voskRecognizer;
+    private Model? _trModel;
+    private Model? _enModel;
+    private VoskRecognizer? _trRecognizer;
+    private VoskRecognizer? _enRecognizer;
     private WaveInEvent? _waveIn;
     private SpeechRecognitionEngine? _sapiEngine;
+    private bool _dualMode;
     private bool _disposed;
 
     public bool IsListening { get; private set; }
@@ -48,8 +50,9 @@ public class SpeechToTextService : IDisposable
     {
         var list = new List<string>
         {
-            "Türkçe (tr-TR - Vosk Akıllı Model)",
-            "İngilizce (en-US - Vosk Akıllı Model)"
+            "Türkçe + İngilizce (Otomatik - Vosk)",
+            "Türkçe (tr-TR - Vosk)",
+            "İngilizce (en-US - Vosk)"
         };
 
         try
@@ -74,13 +77,17 @@ public class SpeechToTextService : IDisposable
             return false;
         }
 
-        if (selectedOption.StartsWith("Türkçe"))
+        if (selectedOption.StartsWith("Türkçe + İngilizce"))
         {
-            return await StartVoskAsync(TrModelName, TrModelUrl, "Türkçe (tr-TR)");
+            return await StartVoskEnginesAsync(loadTr: true, loadEn: true, label: "TR + EN Otomatik");
+        }
+        else if (selectedOption.StartsWith("Türkçe"))
+        {
+            return await StartVoskEnginesAsync(loadTr: true, loadEn: false, label: "Türkçe (tr-TR)");
         }
         else if (selectedOption.StartsWith("İngilizce"))
         {
-            return await StartVoskAsync(EnModelName, EnModelUrl, "İngilizce (en-US)");
+            return await StartVoskEnginesAsync(loadTr: false, loadEn: true, label: "İngilizce (en-US)");
         }
         else
         {
@@ -89,25 +96,41 @@ public class SpeechToTextService : IDisposable
         }
     }
 
-    private async Task<bool> StartVoskAsync(string modelName, string modelUrl, string label)
+    private async Task<bool> StartVoskEnginesAsync(bool loadTr, bool loadEn, string label)
     {
         try
         {
-            string modelPath = Path.Combine(_modelsRoot, modelName);
-            if (!Directory.Exists(modelPath))
+            string trPath = Path.Combine(_modelsRoot, TrModelName);
+            string enPath = Path.Combine(_modelsRoot, EnModelName);
+
+            if (loadTr && !Directory.Exists(trPath))
             {
-                bool downloaded = await DownloadModelAsync(modelName, modelUrl, modelPath);
-                if (!downloaded) return false;
+                if (!await DownloadModelAsync(TrModelName, TrModelUrl, trPath, "Türkçe")) return false;
+            }
+            if (loadEn && !Directory.Exists(enPath))
+            {
+                if (!await DownloadModelAsync(EnModelName, EnModelUrl, enPath, "İngilizce")) return false;
             }
 
-            StatusInfoChanged?.Invoke($"{label} konuşma modeli yükleniyor...");
+            StatusInfoChanged?.Invoke($"{label} modeli yükleniyor...");
             await Task.Run(() =>
             {
                 CleanupVosk();
-                _voskModel = new Model(modelPath);
-                _voskRecognizer = new VoskRecognizer(_voskModel, 16000.0f);
+                if (loadTr)
+                {
+                    _trModel = new Model(trPath);
+                    _trRecognizer = new VoskRecognizer(_trModel, 16000.0f);
+                    _trRecognizer.SetWords(true);
+                }
+                if (loadEn)
+                {
+                    _enModel = new Model(enPath);
+                    _enRecognizer = new VoskRecognizer(_enModel, 16000.0f);
+                    _enRecognizer.SetWords(true);
+                }
             });
 
+            _dualMode = loadTr && loadEn;
             _waveIn = new WaveInEvent
             {
                 DeviceNumber = 0,
@@ -131,17 +154,17 @@ public class SpeechToTextService : IDisposable
         catch (Exception ex)
         {
             CleanupVosk();
-            ErrorOccurred?.Invoke($"Vosk konuşma tanıma başlatılamadı: {ex.Message}");
+            ErrorOccurred?.Invoke($"Konuşma tanıma başlatılamadı: {ex.Message}");
             return false;
         }
     }
 
-    private async Task<bool> DownloadModelAsync(string modelName, string url, string targetDir)
+    private async Task<bool> DownloadModelAsync(string modelName, string url, string targetDir, string langLabel)
     {
         string zipPath = Path.Combine(_modelsRoot, $"{modelName}.zip");
         try
         {
-            StatusInfoChanged?.Invoke($"İlk kullanım için {modelName} indiriliyor...");
+            StatusInfoChanged?.Invoke($"İlk kullanım için {langLabel} modeli indiriliyor...");
             using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
             using var response = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
@@ -165,13 +188,13 @@ public class SpeechToTextService : IDisposable
                     if (percent != lastPercent && percent % 5 == 0)
                     {
                         lastPercent = percent;
-                        StatusInfoChanged?.Invoke($"Türkçe/İngilizce konuşma modeli indiriliyor: %{percent}");
+                        StatusInfoChanged?.Invoke($"{langLabel} konuşma modeli indiriliyor: %{percent}");
                     }
                 }
             }
 
             fileStream.Close();
-            StatusInfoChanged?.Invoke("Model dosyaları çıkarılıyor...");
+            StatusInfoChanged?.Invoke($"{langLabel} model dosyaları çıkarılıyor...");
             await Task.Run(() => ZipFile.ExtractToDirectory(zipPath, _modelsRoot, overwriteFiles: true));
 
             if (File.Exists(zipPath)) File.Delete(zipPath);
@@ -180,37 +203,97 @@ public class SpeechToTextService : IDisposable
         catch (Exception ex)
         {
             try { if (File.Exists(zipPath)) File.Delete(zipPath); } catch { }
-            ErrorOccurred?.Invoke($"Konuşma modeli indirilemedi (İnternet bağlantınızı kontrol edin).\nDetay: {ex.Message}");
+            ErrorOccurred?.Invoke($"{langLabel} konuşma modeli indirilemedi (İnternet bağlantınızı kontrol edin).\nDetay: {ex.Message}");
             return false;
         }
     }
 
     private void OnWaveDataAvailable(object? sender, WaveInEventArgs e)
     {
-        if (_voskRecognizer == null || !IsListening) return;
+        if (!IsListening) return;
 
         try
         {
-            if (_voskRecognizer.AcceptWaveform(e.Buffer, e.BytesRecorded))
+            if (_dualMode && _trRecognizer != null && _enRecognizer != null)
             {
-                string json = _voskRecognizer.Result();
-                string text = ExtractJsonField(json, "text");
-                if (!string.IsNullOrWhiteSpace(text))
+                bool trReady = _trRecognizer.AcceptWaveform(e.Buffer, e.BytesRecorded);
+                bool enReady = _enRecognizer.AcceptWaveform(e.Buffer, e.BytesRecorded);
+
+                if (trReady || enReady)
                 {
-                    TextRecognized?.Invoke(text, 1.0f);
+                    string trJson = trReady ? _trRecognizer.Result() : _trRecognizer.FinalResult();
+                    string enJson = enReady ? _enRecognizer.Result() : _enRecognizer.FinalResult();
+
+                    var (trText, trConf) = ParseVoskResult(trJson);
+                    var (enText, enConf) = ParseVoskResult(enJson);
+
+                    if (!string.IsNullOrWhiteSpace(trText) || !string.IsNullOrWhiteSpace(enText))
+                    {
+                        if (enConf > trConf && !string.IsNullOrWhiteSpace(enText))
+                            TextRecognized?.Invoke(enText, enConf);
+                        else if (!string.IsNullOrWhiteSpace(trText))
+                            TextRecognized?.Invoke(trText, trConf);
+                        else if (!string.IsNullOrWhiteSpace(enText))
+                            TextRecognized?.Invoke(enText, enConf);
+                    }
                 }
+                else
+                {
+                    string trPart = ExtractJsonField(_trRecognizer.PartialResult(), "partial");
+                    string enPart = ExtractJsonField(_enRecognizer.PartialResult(), "partial");
+                    string combined = string.IsNullOrWhiteSpace(enPart) ? trPart : $"{trPart} / {enPart}";
+                    if (!string.IsNullOrWhiteSpace(combined))
+                        HypothesisUpdated?.Invoke(combined);
+                }
+                return;
+            }
+
+            var active = _trRecognizer ?? _enRecognizer;
+            if (active == null) return;
+
+            if (active.AcceptWaveform(e.Buffer, e.BytesRecorded))
+            {
+                var (text, conf) = ParseVoskResult(active.Result());
+                if (!string.IsNullOrWhiteSpace(text))
+                    TextRecognized?.Invoke(text, conf);
             }
             else
             {
-                string json = _voskRecognizer.PartialResult();
-                string partial = ExtractJsonField(json, "partial");
+                string partial = ExtractJsonField(active.PartialResult(), "partial");
                 if (!string.IsNullOrWhiteSpace(partial))
-                {
                     HypothesisUpdated?.Invoke(partial);
-                }
             }
         }
         catch { }
+    }
+
+    private static (string Text, float AvgConfidence) ParseVoskResult(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            string text = doc.RootElement.TryGetProperty("text", out var t) ? (t.GetString()?.Trim() ?? "") : "";
+            float avgConf = 0f;
+            if (doc.RootElement.TryGetProperty("result", out var arr) && arr.ValueKind == JsonValueKind.Array)
+            {
+                int count = 0;
+                float sum = 0;
+                foreach (var item in arr.EnumerateArray())
+                {
+                    if (item.TryGetProperty("conf", out var c))
+                    {
+                        sum += (float)c.GetDouble();
+                        count++;
+                    }
+                }
+                if (count > 0) avgConf = sum / count;
+            }
+            return (text, avgConf);
+        }
+        catch
+        {
+            return (string.Empty, 0f);
+        }
     }
 
     private static string ExtractJsonField(string json, string field)
@@ -295,10 +378,14 @@ public class SpeechToTextService : IDisposable
         }
         catch { }
 
-        try { _voskRecognizer?.Dispose(); } catch { }
-        try { _voskModel?.Dispose(); } catch { }
-        _voskRecognizer = null;
-        _voskModel = null;
+        try { _trRecognizer?.Dispose(); } catch { }
+        try { _enRecognizer?.Dispose(); } catch { }
+        try { _trModel?.Dispose(); } catch { }
+        try { _enModel?.Dispose(); } catch { }
+        _trRecognizer = null;
+        _enRecognizer = null;
+        _trModel = null;
+        _enModel = null;
     }
 
     private void CleanupSapi()

@@ -47,6 +47,16 @@ public partial class MainForm : Form
         var engines = SpeechToTextService.GetAvailableEngines();
         cmbRecognizer.Items.AddRange(engines.ToArray());
         if (cmbRecognizer.Items.Count > 0) cmbRecognizer.SelectedIndex = 0;
+
+        cmbRecognizer.SelectedIndexChanged += async (s, ev) =>
+        {
+            if (_sttService.IsListening)
+            {
+                _sttService.StopListening();
+                string selectedEngine = cmbRecognizer.SelectedItem?.ToString() ?? "Türkçe + İngilizce (Otomatik - Vosk)";
+                await _sttService.StartListeningAsync(selectedEngine);
+            }
+        };
     }
 
     // ─── Text-to-Speech İşlemleri ─────────────────────────────────────────────
