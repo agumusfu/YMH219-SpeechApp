@@ -6,7 +6,7 @@ namespace SpeechApp.Services;
 
 /// <summary>
 /// Çift motorlu Text-to-Speech servisi:
-/// 1) Yüksek kaliteli Türkçe/İngilizce Online TTS (NAudio WaveOutEvent + Mp3FileReader)
+/// 1) Yüksek kaliteli Türkçe/İngilizce Online TTS (NAudio WaveOutEvent + anlık hız/ses kontrolü)
 /// 2) Çevrimdışı Windows SAPI5 (System.Speech.Synthesis.SpeechSynthesizer)
 /// </summary>
 public class TextToSpeechService : IDisposable
@@ -14,6 +14,7 @@ public class TextToSpeechService : IDisposable
     private readonly SpeechSynthesizer _sapiSynthesizer;
     private readonly HttpClient _httpClient;
     private WaveOutEvent? _waveOut;
+    private SpeedSampleProvider? _speedProvider;
     private CancellationTokenSource? _onlineCts;
     private bool _isOnlineSpeaking;
     private bool _isOnlinePaused;
@@ -76,15 +77,40 @@ public class TextToSpeechService : IDisposable
 
     public void Configure(int rate, int volume)
     {
-        _rate = Math.Clamp(rate, -10, 10);
-        _volume = Math.Clamp(volume, 0, 100);
+        SetRate(rate);
+        SetVolume(volume);
+    }
 
-        _sapiSynthesizer.Rate = _rate;
-        _sapiSynthesizer.Volume = _volume;
+    public void SetRate(int rate)
+    {
+        _rate = Math.Clamp(rate, -10, 10);
+        if (!_disposed)
+        {
+            try { _sapiSynthesizer.Rate = _rate; } catch { }
+        }
+        if (_speedProvider != null)
+        {
+            _speedProvider.SpeedFactor = RateToSpeedFactor(_rate);
+        }
+    }
+
+    public void SetVolume(int volume)
+    {
+        _volume = Math.Clamp(volume, 0, 100);
+        if (!_disposed)
+        {
+            try { _sapiSynthesizer.Volume = _volume; } catch { }
+        }
         if (_waveOut != null)
         {
-            _waveOut.Volume = _volume / 100f;
+            try { _waveOut.Volume = _volume / 100f; } catch { }
         }
+    }
+
+    private static float RateToSpeedFactor(int rate)
+    {
+        // -10 -> 0.50x, 0 -> 1.00x, +10 -> 1.60x
+        return rate >= 0 ? 1.0f + rate * 0.06f : 1.0f + rate * 0.05f;
     }
 
     public async Task SpeakAsync(string text, string selectedVoice)
@@ -139,8 +165,7 @@ public class TextToSpeechService : IDisposable
                 if (token.IsCancellationRequested) break;
 
                 string encoded = WebUtility.UrlEncode(chunk);
-                string speedParam = _rate >= 0 ? "1" : "0.75";
-                string url = $"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded}&tl={langCode}&ttsspeed={speedParam}&client=tw-ob";
+                string url = $"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded}&tl={langCode}&ttsspeed=1&client=tw-ob";
 
                 byte[] mp3Bytes = await _httpClient.GetByteArrayAsync(url, token);
                 if (token.IsCancellationRequested) break;
@@ -157,7 +182,8 @@ public class TextToSpeechService : IDisposable
         {
             _isOnlineSpeaking = false;
             _isOnlinePaused = false;
-            StatusChanged?.Invoke("Ready");
+            if (!_disposed)
+                StatusChanged?.Invoke("Ready");
         }
     }
 
@@ -165,10 +191,17 @@ public class TextToSpeechService : IDisposable
     {
         using var ms = new MemoryStream(mp3Bytes);
         using var reader = new Mp3FileReader(ms);
+        var sampleProvider = reader.ToSampleProvider();
+        var speedProvider = new SpeedSampleProvider(sampleProvider)
+        {
+            SpeedFactor = RateToSpeedFactor(_rate)
+        };
+        _speedProvider = speedProvider;
+
         using var waveOut = new WaveOutEvent();
         _waveOut = waveOut;
         waveOut.Volume = _volume / 100f;
-        waveOut.Init(reader);
+        waveOut.Init(speedProvider);
 
         var tcs = new TaskCompletionSource<bool>();
         waveOut.PlaybackStopped += (s, e) => tcs.TrySetResult(true);
@@ -180,8 +213,15 @@ public class TextToSpeechService : IDisposable
             tcs.TrySetCanceled();
         });
 
-        await tcs.Task;
-        _waveOut = null;
+        try
+        {
+            await tcs.Task;
+        }
+        finally
+        {
+            _waveOut = null;
+            _speedProvider = null;
+        }
     }
 
     public void PauseOrResume()
@@ -274,5 +314,90 @@ public class TextToSpeechService : IDisposable
         try { _httpClient.Dispose(); } catch { }
         try { _sapiSynthesizer.Dispose(); } catch { }
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Ses oynatılırken gerçek zamanlı hız değişimi (0.5x - 1.6x) sağlayan doğrusal enterpolasyonlu SampleProvider.
+    /// </summary>
+    private sealed class SpeedSampleProvider : ISampleProvider
+    {
+        private readonly ISampleProvider _source;
+        private readonly int _channels;
+        private float[] _sourceBuffer = Array.Empty<float>();
+        private int _sourceCount;
+        private double _readPos;
+
+        public volatile float SpeedFactor = 1.0f;
+        public WaveFormat WaveFormat => _source.WaveFormat;
+
+        public SpeedSampleProvider(ISampleProvider source)
+        {
+            _source = source;
+            _channels = source.WaveFormat.Channels;
+        }
+
+        public int Read(float[] buffer, int offset, int count)
+        {
+            float speed = Math.Clamp(SpeedFactor, 0.4f, 2.0f);
+            if (Math.Abs(speed - 1.0f) < 0.01f && _sourceCount == 0)
+            {
+                return _source.Read(buffer, offset, count);
+            }
+
+            int framesRequested = count / _channels;
+            int maxSourceFramesNeeded = (int)Math.Ceiling(framesRequested * speed) + 4;
+            int minSamplesNeeded = maxSourceFramesNeeded * _channels;
+
+            if (_sourceBuffer.Length < minSamplesNeeded)
+            {
+                Array.Resize(ref _sourceBuffer, minSamplesNeeded * 2);
+            }
+
+            // Kalan örnekleri başa kaydır ve yeni örnekleri oku
+            int availableFrames = _sourceCount / _channels;
+            int intPos = (int)_readPos;
+            if (intPos > 0 && intPos <= availableFrames)
+            {
+                int remainingSamples = (_sourceCount - intPos * _channels);
+                if (remainingSamples > 0)
+                    Array.Copy(_sourceBuffer, intPos * _channels, _sourceBuffer, 0, remainingSamples);
+                _sourceCount = remainingSamples;
+                _readPos -= intPos;
+            }
+            else if (intPos > availableFrames)
+            {
+                _sourceCount = 0;
+                _readPos = 0;
+            }
+
+            int spaceAvailable = _sourceBuffer.Length - _sourceCount;
+            if (spaceAvailable > 0)
+            {
+                int read = _source.Read(_sourceBuffer, _sourceCount, spaceAvailable);
+                _sourceCount += read;
+            }
+
+            availableFrames = _sourceCount / _channels;
+            if (availableFrames <= 1) return 0;
+
+            int outSamples = 0;
+            for (int f = 0; f < framesRequested; f++)
+            {
+                int idx0 = (int)_readPos;
+                int idx1 = idx0 + 1;
+                if (idx1 >= availableFrames) break;
+
+                float frac = (float)(_readPos - idx0);
+                for (int c = 0; c < _channels; c++)
+                {
+                    float s0 = _sourceBuffer[idx0 * _channels + c];
+                    float s1 = _sourceBuffer[idx1 * _channels + c];
+                    buffer[offset + outSamples++] = s0 + (s1 - s0) * frac;
+                }
+                _readPos += speed;
+            }
+
+            return outSamples;
+        }
     }
 }

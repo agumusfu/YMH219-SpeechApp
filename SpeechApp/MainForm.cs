@@ -40,6 +40,9 @@ public partial class MainForm : Form
 
     private void MainForm_Load(object? sender, EventArgs e)
     {
+        trkRate.ValueChanged += (s, ev) => _ttsService.SetRate(trkRate.Value);
+        trkVolume.ValueChanged += (s, ev) => _ttsService.SetVolume(trkVolume.Value);
+
         var voices = _ttsService.GetAvailableVoices();
         cmbVoice.Items.AddRange(voices.ToArray());
         if (cmbVoice.Items.Count > 0) cmbVoice.SelectedIndex = 0;
