@@ -1,0 +1,94 @@
+# YMH 219 - Speech-to-Text ve Text-to-Speech Uygulaması (SpeechApp)
+
+**Ders:** YMH 219 - Nesne Tabanlı Programlama (C# .NET 8.0 WinForms)  
+**Geliştirici:** [agumusfu](https://github.com/agumusfu)
+
+---
+
+## Proje Hakkında
+
+Bu proje, ses ve metin arasında çift yönlü dönüşüm yapabilen bir Windows Forms masaüstü uygulamasıdır. Kullanıcı metin alanına yazdığı metni sesli olarak okutabilir (**Text-to-Speech**) veya mikrofondan aldığı konuşmayı gerçek zamanlı olarak metne dönüştürebilir (**Speech-to-Text**).
+
+---
+
+## Ekran Görüntüleri
+
+### Text-to-Speech (Metinden Sese Okuma)
+![Text-to-Speech Arayüzü](docs/screenshots/tts_speaking.png)
+
+### Speech-to-Text (Mikrofon Dinleme ve Zaman Damgalı Kayıtlar)
+![Speech-to-Text Arayüzü](docs/screenshots/stt_listening.png)
+
+---
+
+## Kullanılan Teknolojiler ve Paketler
+
+- **Platform:** C# / .NET 8.0 (`net8.0-windows`) Windows Forms
+- **NuGet Paketi:** `System.Speech` (`8.0.0`)
+  - `System.Speech.Synthesis.SpeechSynthesizer` (Text-to-Speech)
+  - `System.Speech.Recognition.SpeechRecognitionEngine` (Speech-to-Text)
+- **Dosya İşlemleri:** `System.IO.StreamWriter` (UTF-8 `.txt` dışa aktarımı)
+
+---
+
+## Proje Yapısı
+
+```text
+YMH219-SpeechApp/
+├── .gitignore
+├── README.md
+├── docs/
+│   └── screenshots/
+│       ├── tts_speaking.png
+│       └── stt_listening.png
+└── SpeechApp/
+    ├── SpeechApp.csproj
+    ├── Program.cs
+    ├── MainForm.cs
+    ├── MainForm.Designer.cs
+    ├── Models/
+    │   └── SpeechRecord.cs              # Zaman damgalı TTS/STT kayıt modeli
+    └── Services/
+        ├── TextToSpeechService.cs       # SpeechSynthesizer sarmalayıcı (IDisposable)
+        ├── SpeechToTextService.cs       # SpeechRecognitionEngine sarmalayıcı & hata yönetimi
+        └── TranscriptExportService.cs   # StreamWriter ile .txt dışa aktarım servisi
+```
+
+---
+
+## Temel Özellikler
+
+- **Text-to-Speech (TTS):**
+  - Metin alanındaki (`RichTextBox`) içeriği sesli okuma
+  - **Başlat**, **Duraklat / Devam Et**, **Durdur** ve **Temizle** kontrolleri
+  - Sistemde yüklü sesler arasından seçim (`ComboBox`)
+  - Okuma hızı (`-10` ile `+10`) ve ses düzeyi (`0%` ile `100%`) ayarı
+- **Speech-to-Text (STT):**
+  - Mikrofon üzerinden konuşmayı algılayıp anlık tahmin (`SpeechHypothesized`) ve kesinleşen metni (`SpeechRecognized`) metin alanına aktarma
+  - Mikrofon veya konuşma tanıma dil paketi bulunamadığında uygulamanın çökmesini önleyen anlaşılır hata mesajları
+- **Durum Takibi & Dışa Aktarım:**
+  - Üst rozet ve alt durum çubuğu (`StatusStrip`) üzerinden aktif işlemin (`Hazır`, `Okuyor`, `Duraklatıldı`, `Dinliyor`) anlık gösterimi
+  - Her TTS/STT işleminin zaman damgası ve güven/hız detayıyla listelenmesi
+  - Dönüştürülen metin ve kayıtların `.txt` dosyasına kaydedilmesi
+
+---
+
+## Kurulum ve Çalıştırma
+
+### Gereksinimler
+- Windows 10/11
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+
+### Derleme ve Çalıştırma
+
+```powershell
+dotnet build SpeechApp/SpeechApp.csproj
+dotnet run --project SpeechApp/SpeechApp.csproj
+```
+
+---
+
+## Bilinen Sınırlamalar ve Geliştirme Notları
+
+- `System.Speech.Recognition.SpeechRecognitionEngine`, Windows'un yerel Konuşma Tanıma (SAPI) motorunu kullanır; dolayısıyla sistemde en az bir konuşma tanıma dil paketi (ör. Windows Ayarları > Zaman ve Dil > Konuşma) ve aktif bir mikrofon bulunmalıdır.
+- Dil paketi veya mikrofon mevcut olmadığında `SpeechToTextService` durumu yakalayarak kullanıcıyı bilgilendirir, Text-to-Speech özellikleri bağımsız olarak çalışmaya devam eder.
