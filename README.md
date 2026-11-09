@@ -1,7 +1,8 @@
 # YMH 219 - Speech-to-Text ve Text-to-Speech Uygulaması (SpeechApp)
 
 **Ders:** YMH 219 - Nesne Tabanlı Programlama (C# .NET 8.0 WinForms)  
-**Geliştirici:** [agumusfu](https://github.com/agumusfu)
+**Öğrenci:** Abdullah Gümüş (`agumusfu`)  
+**Öğrenci Numarası:** 250542016
 
 ---
 
