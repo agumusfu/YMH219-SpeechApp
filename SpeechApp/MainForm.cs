@@ -90,6 +90,10 @@ public partial class MainForm : Form
     private void btnClear_Click(object? sender, EventArgs e)
     {
         rtbText.Clear();
+        _records.Clear();
+        lstRecords.Items.Clear();
+        lblHypothesis.Text = "Anlık Algılama: -";
+        tsslRecordCount.Text = "Kayıt Sayısı: 0";
     }
 
     private void OnTtsStatusChanged(string state)

@@ -139,10 +139,10 @@ partial class MainForm
         // splitMain
         splitMain.Dock = DockStyle.Fill;
         splitMain.Orientation = Orientation.Vertical;
-        splitMain.Size = new Size(980, 500);
-        splitMain.Panel1MinSize = 300;
-        splitMain.Panel2MinSize = 300;
-        splitMain.SplitterDistance = 520;
+        splitMain.Size = new Size(1060, 520);
+        splitMain.Panel1MinSize = 440;
+        splitMain.Panel2MinSize = 440;
+        splitMain.SplitterDistance = 530;
         splitMain.Padding = new Padding(8);
 
         // grpText (Left: TTS + Metin Alani)
@@ -159,12 +159,12 @@ partial class MainForm
         rtbText.Text = "Merhaba! Bu metni sesli olarak okutabilir veya mikrofonu baslatarak konusmanizi metne donusturebilirsiniz.";
 
         pnlTextButtons.Dock = DockStyle.Bottom;
-        pnlTextButtons.Height = 48;
+        pnlTextButtons.Height = 50;
         pnlTextButtons.Padding = new Padding(0, 8, 0, 0);
 
-        btnSpeak.Text = "Sesli Oku (Baslat)";
+        btnSpeak.Text = "Sesli Oku";
         btnSpeak.Location = new Point(0, 8);
-        btnSpeak.Size = new Size(140, 34);
+        btnSpeak.Size = new Size(118, 36);
         btnSpeak.BackColor = Color.FromArgb(0, 150, 100);
         btnSpeak.ForeColor = Color.White;
         btnSpeak.FlatStyle = FlatStyle.Flat;
@@ -172,8 +172,8 @@ partial class MainForm
         pnlTextButtons.Controls.Add(btnSpeak);
 
         btnPauseResume.Text = "Duraklat";
-        btnPauseResume.Location = new Point(148, 8);
-        btnPauseResume.Size = new Size(110, 34);
+        btnPauseResume.Location = new Point(126, 8);
+        btnPauseResume.Size = new Size(108, 36);
         btnPauseResume.BackColor = Color.FromArgb(200, 140, 30);
         btnPauseResume.ForeColor = Color.White;
         btnPauseResume.FlatStyle = FlatStyle.Flat;
@@ -182,8 +182,8 @@ partial class MainForm
         pnlTextButtons.Controls.Add(btnPauseResume);
 
         btnStopSpeak.Text = "Durdur";
-        btnStopSpeak.Location = new Point(266, 8);
-        btnStopSpeak.Size = new Size(95, 34);
+        btnStopSpeak.Location = new Point(242, 8);
+        btnStopSpeak.Size = new Size(95, 36);
         btnStopSpeak.BackColor = Color.FromArgb(180, 50, 50);
         btnStopSpeak.ForeColor = Color.White;
         btnStopSpeak.FlatStyle = FlatStyle.Flat;
@@ -192,8 +192,8 @@ partial class MainForm
         pnlTextButtons.Controls.Add(btnStopSpeak);
 
         btnClear.Text = "Temizle";
-        btnClear.Location = new Point(369, 8);
-        btnClear.Size = new Size(95, 34);
+        btnClear.Location = new Point(345, 8);
+        btnClear.Size = new Size(95, 36);
         btnClear.BackColor = Color.FromArgb(75, 80, 95);
         btnClear.ForeColor = Color.White;
         btnClear.FlatStyle = FlatStyle.Flat;
@@ -220,16 +220,16 @@ partial class MainForm
         pnlSttTop.Controls.Add(lblRecognizer);
 
         cmbRecognizer.Location = new Point(100, 4);
-        cmbRecognizer.Width = 285;
+        cmbRecognizer.Width = 340;
         cmbRecognizer.DropDownStyle = ComboBoxStyle.DropDownList;
         cmbRecognizer.FlatStyle = FlatStyle.Flat;
         cmbRecognizer.BackColor = Color.FromArgb(55, 58, 74);
         cmbRecognizer.ForeColor = Color.White;
         pnlSttTop.Controls.Add(cmbRecognizer);
 
-        btnStartListen.Text = "Mikrofonu Baslat";
+        btnStartListen.Text = "Mikrofon Aç";
         btnStartListen.Location = new Point(0, 38);
-        btnStartListen.Size = new Size(140, 34);
+        btnStartListen.Size = new Size(135, 36);
         btnStartListen.BackColor = Color.FromArgb(50, 110, 200);
         btnStartListen.ForeColor = Color.White;
         btnStartListen.FlatStyle = FlatStyle.Flat;
@@ -237,8 +237,8 @@ partial class MainForm
         pnlSttTop.Controls.Add(btnStartListen);
 
         btnStopListen.Text = "Dinlemeyi Durdur";
-        btnStopListen.Location = new Point(148, 38);
-        btnStopListen.Size = new Size(135, 34);
+        btnStopListen.Location = new Point(143, 38);
+        btnStopListen.Size = new Size(155, 36);
         btnStopListen.BackColor = Color.FromArgb(180, 50, 50);
         btnStopListen.ForeColor = Color.White;
         btnStopListen.FlatStyle = FlatStyle.Flat;
@@ -247,8 +247,8 @@ partial class MainForm
         pnlSttTop.Controls.Add(btnStopListen);
 
         btnExportTxt.Text = ".txt Kaydet";
-        btnExportTxt.Location = new Point(291, 38);
-        btnExportTxt.Size = new Size(105, 34);
+        btnExportTxt.Location = new Point(306, 38);
+        btnExportTxt.Size = new Size(115, 36);
         btnExportTxt.BackColor = Color.FromArgb(0, 140, 130);
         btnExportTxt.ForeColor = Color.White;
         btnExportTxt.FlatStyle = FlatStyle.Flat;
@@ -283,8 +283,8 @@ partial class MainForm
 
         // MainForm
         this.Text = "YMH 219 - SpeechApp (TTS & STT)";
-        this.Size = new Size(1020, 660);
-        this.MinimumSize = new Size(880, 540);
+        this.Size = new Size(1080, 680);
+        this.MinimumSize = new Size(960, 560);
         this.BackColor = Color.FromArgb(28, 30, 42);
         this.Controls.Add(splitMain);
         this.Controls.Add(pnlTtsControls);

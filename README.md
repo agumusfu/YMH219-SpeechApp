@@ -61,11 +61,12 @@ YMH219-SpeechApp/
 
 - **Text-to-Speech (TTS):**
   - Metin alanındaki (`RichTextBox`) Türkçe veya İngilizce içeriği doğal sesle okuma
-  - **Başlat**, **Duraklat / Devam Et**, **Durdur** ve **Temizle** kontrolleri
+  - **Sesli Oku**, **Duraklat / Devam Et**, **Durdur** ve **Temizle** kontrolleri (**Temizle** butonu hem metin alanını hem de anlık algılama ile zaman damgalı kayıt listesini temizler)
   - Yüksek kaliteli Türkçe/İngilizce doğal ses ile yerel `[Yerel SAPI]` sistem sesleri arasında seçim (`ComboBox`)
   - Okuma hızı (`-10` ile `+10`) ve ses düzeyi (`0%` ile `100%`) ayarı
 - **Speech-to-Text (STT):**
-  - Vosk + NAudio tabanlı **Türkçe (`tr-TR`)** ve İngilizce (`en-US`) çevrimdışı konuşma tanıma
+  - Vosk + NAudio tabanlı **Türkçe + İngilizce (Otomatik)**, **Türkçe (`tr-TR`)** ve **İngilizce (`en-US`)** çevrimdışı konuşma tanıma
+  - **Mikrofon Aç** ve **Dinlemeyi Durdur** kontrolleri; canlı dil değişikliğinde otomatik model geçişi
   - Mikrofon üzerinden konuşmayı algılayıp anlık tahmin (`Anlık Algılama`) ve kesinleşen metni metin alanına aktarma
   - Mikrofon veya konuşma tanıma servisine erişilemediğinde kullanıcıya anlaşılır Türkçe hata mesajları
 - **Arayüz ve Dışa Aktarım:**
