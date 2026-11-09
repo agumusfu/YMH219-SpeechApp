@@ -46,6 +46,20 @@ public class TextToSpeechService : IDisposable
             "İngilizce (Yüksek Kalite - Doğal Ses)"
         };
 
+        // Windows 10/11 OneCore Yerel Sesler (örn. Microsoft Tolga - Türkçe)
+        try
+        {
+            foreach (var v in Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices)
+            {
+                string tag = v.Language.StartsWith("tr", StringComparison.OrdinalIgnoreCase)
+                    ? "[Yerel SAPI/OneCore TR]"
+                    : "[Yerel OneCore]";
+                voices.Add($"{tag} {v.DisplayName}");
+            }
+        }
+        catch { }
+
+        // Klasik SAPI5 Yerel Sesler
         try
         {
             foreach (InstalledVoice voice in _sapiSynthesizer.GetInstalledVoices())
@@ -109,6 +123,13 @@ public class TextToSpeechService : IDisposable
         {
             await SpeakOnlineAsync(text, "en");
         }
+        else if (selectedVoice.StartsWith("[Yerel SAPI/OneCore TR]") || selectedVoice.StartsWith("[Yerel OneCore]"))
+        {
+            string displayName = selectedVoice
+                .Replace("[Yerel SAPI/OneCore TR] ", "")
+                .Replace("[Yerel OneCore] ", "");
+            await SpeakOneCoreAsync(text, displayName);
+        }
         else
         {
             string sapiName = selectedVoice.Replace("[Yerel SAPI] ", "");
@@ -146,6 +167,47 @@ public class TextToSpeechService : IDisposable
         catch (Exception ex)
         {
             ErrorOccurred?.Invoke($"Seslendirme servisine bağlanılamadı (İnternet bağlantınızı kontrol edin veya '[Yerel SAPI]' sesi seçin).\nDetay: {ex.Message}");
+        }
+        finally
+        {
+            _isSpeaking = false;
+            _isPaused = false;
+            if (!_disposed)
+                StatusChanged?.Invoke("Ready");
+        }
+    }
+
+    private async Task SpeakOneCoreAsync(string text, string displayName)
+    {
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+        _isSpeaking = true;
+        _isPaused = false;
+        StatusChanged?.Invoke("Speaking");
+
+        try
+        {
+            using var synth = new Windows.Media.SpeechSynthesis.SpeechSynthesizer();
+            var matched = Windows.Media.SpeechSynthesis.SpeechSynthesizer.AllVoices
+                .FirstOrDefault(v => v.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase));
+            if (matched != null)
+                synth.Voice = matched;
+
+            using var speechStream = await synth.SynthesizeTextToStreamAsync(text).AsTask(token);
+            if (token.IsCancellationRequested) return;
+
+            using var netStream = speechStream.AsStreamForRead();
+            using var ms = new MemoryStream();
+            await netStream.CopyToAsync(ms, token);
+            ms.Position = 0;
+
+            using var reader = new WaveFileReader(ms);
+            await PlaySampleProviderAsync(reader.ToSampleProvider(), token);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            ErrorOccurred?.Invoke($"Yerel OneCore seslendirme hatası: {ex.Message}");
         }
         finally
         {
