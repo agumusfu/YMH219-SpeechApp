@@ -21,8 +21,8 @@ public class TextToSpeechService : IDisposable
     private int _volume = 100;
     private bool _disposed;
 
-    public bool IsSpeaking => _isOnlineSpeaking || _sapiSynthesizer.State == SynthesizerState.Speaking;
-    public bool IsPaused => _isOnlinePaused || _sapiSynthesizer.State == SynthesizerState.Paused;
+    public bool IsSpeaking => !_disposed && (_isOnlineSpeaking || _sapiSynthesizer.State == SynthesizerState.Speaking);
+    public bool IsPaused => !_disposed && (_isOnlinePaused || _sapiSynthesizer.State == SynthesizerState.Paused);
 
     public event Action<string>? StatusChanged; // "Ready", "Speaking", "Paused"
     public event Action<string>? ErrorOccurred;
@@ -33,13 +33,14 @@ public class TextToSpeechService : IDisposable
         _sapiSynthesizer.SetOutputToDefaultAudioDevice();
         _sapiSynthesizer.StateChanged += (s, e) =>
         {
-            if (!_isOnlineSpeaking)
+            if (!_disposed && !_isOnlineSpeaking)
             {
                 StatusChanged?.Invoke(e.State.ToString());
             }
         };
         _sapiSynthesizer.SpeakCompleted += (s, e) =>
         {
+            if (_disposed) return;
             if (e.Error != null && !e.Cancelled && e.Error is not OperationCanceledException)
                 ErrorOccurred?.Invoke($"Seslendirme hatası: {e.Error.Message}");
             if (!_isOnlineSpeaking)
@@ -227,15 +228,18 @@ public class TextToSpeechService : IDisposable
         _isOnlineSpeaking = false;
         _isOnlinePaused = false;
 
-        try
+        if (!_disposed)
         {
-            if (_sapiSynthesizer.State == SynthesizerState.Paused)
-                _sapiSynthesizer.Resume();
-            _sapiSynthesizer.SpeakAsyncCancelAll();
-        }
-        catch { }
+            try
+            {
+                if (_sapiSynthesizer.State == SynthesizerState.Paused)
+                    _sapiSynthesizer.Resume();
+                _sapiSynthesizer.SpeakAsyncCancelAll();
+            }
+            catch { }
 
-        StatusChanged?.Invoke("Ready");
+            StatusChanged?.Invoke("Ready");
+        }
     }
 
     private static List<string> SplitTextIntoChunks(string text, int maxLen)
@@ -264,9 +268,11 @@ public class TextToSpeechService : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        Stop();
-        _httpClient.Dispose();
-        _sapiSynthesizer.Dispose();
+        try { _onlineCts?.Cancel(); } catch { }
+        try { _waveOut?.Stop(); } catch { }
+        try { _sapiSynthesizer.SpeakAsyncCancelAll(); } catch { }
+        try { _httpClient.Dispose(); } catch { }
+        try { _sapiSynthesizer.Dispose(); } catch { }
         GC.SuppressFinalize(this);
     }
 }

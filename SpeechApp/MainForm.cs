@@ -98,7 +98,8 @@ public partial class MainForm : Form
 
     private void OnTtsStatusChanged(string state)
     {
-        if (InvokeRequired) { Invoke(() => OnTtsStatusChanged(state)); return; }
+        if (IsDisposed || Disposing) return;
+        if (InvokeRequired) { try { Invoke(() => OnTtsStatusChanged(state)); } catch { } return; }
 
         switch (state)
         {
@@ -148,7 +149,8 @@ public partial class MainForm : Form
 
     private void OnSttListeningChanged(bool listening)
     {
-        if (InvokeRequired) { Invoke(() => OnSttListeningChanged(listening)); return; }
+        if (IsDisposed || Disposing) return;
+        if (InvokeRequired) { try { Invoke(() => OnSttListeningChanged(listening)); } catch { } return; }
 
         btnStartListen.Enabled = !listening;
         btnStopListen.Enabled = listening;
